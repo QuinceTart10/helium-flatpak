@@ -41,6 +41,7 @@ jobs:
         run: echo -n "$GPG_KEY" | gpg --import
       - name: "Build and sign repo"
         run: |
+          ls
           ostree init --repo=repo --mode=archive-z2 --collection-id=zip.privacyslop.helium
           flatpak build-import-bundle --gpg-sign=A54D5ADD2CA0971F repo helium-x86_64.flatpak
           flatpak build-import-bundle --gpg-sign=A54D5ADD2CA0971F repo helium-aarch64.flatpak
