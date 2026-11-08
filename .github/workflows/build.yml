@@ -27,10 +27,12 @@ jobs:
           keep-build-dirs: true
           manifest-path: flatpak/net.imput.helium.yaml
           arch: ${{ matrix.variant.arch }}
+      - run: tar cf build.tar -C flatpak_app .
       - uses: actions/upload-artifact@v7
         with:
-          name: build-dir
-          path: flatpak_app
+          name: build-${{ matrix.variant.arch }}.tar
+          path: build.tar
+          archive: false
   combine:
     name: "Build repo and sign"
     runs-on: ubuntu-24.04-arm # arm builders are slightly faster ;)
@@ -38,6 +40,13 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/download-artifact@v8
+        with:
+          pattern: build-*.tar
+      - name: "Extract files"
+        run: |
+          mkdir build-aarch64 build-x86_64
+          tar xf build-aarch64.tar -C build-aarch64
+          tar xf build-x86_64.tar -C build-x86_64
       - name: "Install dependencies"
         run: sudo apt install -y flatpak ostree
       - name: "Import signing key"
@@ -46,8 +55,8 @@ jobs:
         run: echo -n "$GPG_KEY" | gpg --import
       - name: "Build and sign repo"
         run: |
-          flatpak build-export --collection-id=zip.privacyslop.helium --gpg-sign=A54D5ADD2CA0971F repo build-dir-aarch64
-          flatpak build-export --collection-id=zip.privacyslop.helium --gpg-sign=A54D5ADD2CA0971F repo build-dir-x86_64
+          flatpak build-export --collection-id=zip.privacyslop.helium --gpg-sign=A54D5ADD2CA0971F repo build-aarch64
+          flatpak build-export --collection-id=zip.privacyslop.helium --gpg-sign=A54D5ADD2CA0971F repo build-x86_64
       - uses: actions/upload-artifact@v7
         with:
           path: repo
