@@ -27,11 +27,11 @@ jobs:
           keep-build-dirs: true
           manifest-path: flatpak/net.imput.helium.yaml
           arch: ${{ matrix.variant.arch }}
-      - run: tar cf build.tar -C flatpak_app .
+      - run: tar cf build-${{ matrix.variant.arch }}.tar -C flatpak_app .
       - uses: actions/upload-artifact@v7
         with:
           name: build-${{ matrix.variant.arch }}.tar
-          path: build.tar
+          path: build-${{ matrix.variant.arch }}.tar
           archive: false
   combine:
     name: "Build repo and sign"
