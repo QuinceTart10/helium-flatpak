@@ -33,8 +33,6 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/download-artifact@v8
-        with:
-          path: /tmp/bundles
       - name: "Install dependencies"
         run: sudo apt install -y flatpak ostree
       - name: "Import signing key"
@@ -44,8 +42,8 @@ jobs:
       - name: "Build and sign repo"
         run: |
           ostree init --repo=repo --mode=archive-z2 --collection-id=zip.privacyslop.helium
-          flatpak build-import-bundle --gpg-sign=A54D5ADD2CA0971F repo /tmp/bundles/helium-x86_64.flatpak
-          flatpak build-import-bundle --gpg-sign=A54D5ADD2CA0971F repo /tmp/bundles/helium-aarch64.flatpak
+          flatpak build-import-bundle --gpg-sign=A54D5ADD2CA0971F repo helium-x86_64.flatpak
+          flatpak build-import-bundle --gpg-sign=A54D5ADD2CA0971F repo helium-aarch64.flatpak
       - uses: actions/upload-artifact@v7
         with:
           path: repo
