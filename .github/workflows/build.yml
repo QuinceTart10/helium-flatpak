@@ -23,7 +23,8 @@ jobs:
       - uses: actions/checkout@v7
       - uses: flatpak/flatpak-github-actions/flatpak-builder@v6
         with:
-          bundle: helium.flatpak
+          build-bundle: false
+          keep-build-dirs: true
           manifest-path: flatpak/net.imput.helium.yaml
           arch: ${{ matrix.variant.arch }}
   combine:
