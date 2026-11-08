@@ -42,11 +42,6 @@ jobs:
       - uses: actions/download-artifact@v8
         with:
           pattern: build-*.tar
-      - name: "Extract files"
-        run: |
-          mkdir build-aarch64 build-x86_64
-          tar xf build-aarch64.tar -C build-aarch64
-          tar xf build-x86_64.tar -C build-x86_64
       - name: "Install dependencies"
         run: sudo apt install -y flatpak ostree
       - name: "Import signing key"
@@ -55,8 +50,8 @@ jobs:
         run: echo -n "$GPG_KEY" | gpg --import
       - name: "Build and sign repo"
         run: |
-          flatpak build-export --collection-id=zip.privacyslop.helium --gpg-sign=A54D5ADD2CA0971F repo build-aarch64
-          flatpak build-export --collection-id=zip.privacyslop.helium --gpg-sign=A54D5ADD2CA0971F repo build-x86_64
+          flatpak build-export --collection-id=zip.privacyslop.helium --gpg-sign=A54D5ADD2CA0971F repo build-aarch64.tar
+          flatpak build-export --collection-id=zip.privacyslop.helium --gpg-sign=A54D5ADD2CA0971F repo build-x86_64.tar
       - uses: actions/upload-artifact@v7
         with:
           path: repo
