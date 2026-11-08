@@ -30,7 +30,7 @@ jobs:
     name: "Build repo and sign"
     runs-on: ubuntu-24.04-arm # arm builders are slightly faster ;)
     needs: flatpak
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/download-artifact@v8
       - name: "Install flatpak"
