@@ -7,7 +7,7 @@ on:
 
 jobs:
   flatpak:
-    name: "Flatpak"
+    name: "Build app"
     container:
       image: ghcr.io/flathub-infra/flatpak-github-actions:freedesktop-26.08
       options: --privileged
@@ -26,3 +26,23 @@ jobs:
           bundle: helium.flatpak
           manifest-path: flatpak/net.imput.helium.yaml
           arch: ${{ matrix.variant.arch }}
+  combine:
+    name: "Build repo and sign"
+    runs-on: ubuntu-24.04-arm # arm builders are slightly faster ;)
+    needs: flatpak
+    if: github.ref == 'refs/heads/master'
+    steps:
+      - uses: actions/download-artifact@v8
+      - name: "Install flatpak"
+        run: sudo apt install -y flatpak
+      - name: "Import signing key"
+        env:
+          GPG_KEY: ${{ secrets.GPG_KEY }}
+        run: echo -n "$GPG_KEY" | gpg --import
+      - name: "Build and sign repo"
+        run: |
+          flatpak build-import-bundle --gpg-sign=A54D5ADD2CA0971F repo helium-x86_64.flatpak
+          flatpak build-import-bundle --gpg-sign=A54D5ADD2CA0971F repo helium-aarch64.flatpak
+      - uses: actions/upload-artifact@v7
+        with:
+          path: repo
