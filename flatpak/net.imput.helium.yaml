@@ -1,0 +1,129 @@
+app-id: net.imput.helium
+runtime: org.freedesktop.Platform
+runtime-version: '26.08'
+sdk: org.freedesktop.Sdk
+base: org.chromium.Chromium.BaseApp
+base-version: '26.08'
+command: helium
+separate-locales: false
+build-options:
+  no-debuginfo: true
+finish-args:
+  - --device=all
+  - --env=GTK_PATH=/app/lib/gtkmodules
+  - --share=ipc
+  - --share=network
+  - --socket=cups
+  - --socket=pcsc # FIDO2
+  - --socket=pulseaudio
+  - --socket=x11
+  - --socket=wayland
+  - --require-version=1.8.2
+  - --system-talk-name=org.bluez
+  - --system-talk-name=org.freedesktop.UPower
+  - --talk-name=org.freedesktop.FileManager1
+  - --talk-name=org.freedesktop.Notifications
+  - --talk-name=org.freedesktop.ScreenSaver
+  - --talk-name=org.freedesktop.secrets
+  - --talk-name=org.gnome.SessionManager
+  - --talk-name=org.kde.StatusNotifierWatcher
+  - --system-talk-name=org.freedesktop.Avahi
+  - --own-name=org.mpris.MediaPlayer2.helium.*
+  - --filesystem=/run/.heim_org.h5l.kcm-socket
+  - --filesystem=xdg-run/pipewire-0
+  - --filesystem=xdg-download
+  # Progressive web apps
+  - --filesystem=~/.local/share/applications:create
+  - --filesystem=~/.local/share/icons:create
+  - --env=CHROME_WEB_APP_DESKTOP_ID_PREFIX=net.imput.helium.flextop.
+  # For GNOME proxy resolution
+  - --filesystem=xdg-run/dconf
+  - --filesystem=~/.config/dconf:ro
+  - --talk-name=ca.desrt.dconf
+  - --env=DCONF_USER_CONFIG_DIR=.config/dconf
+  - --env=GIO_EXTRA_MODULES=/app/lib/gio/modules
+  - --env=GSETTINGS_BACKEND=dconf
+  # For KDE proxy resolution (KDE5 only)
+  - --filesystem=~/.config/kioslaverc
+modules:
+  - name: dconf
+    buildsystem: meson
+    config-opts:
+      - -Dbash_completion=false
+      - -Dman=false
+      - -Dvapi=false
+    cleanup:
+      - /etc
+      - /include
+      - ca.desrt.dconf.service
+      - dconf.service
+      - dconf-service
+      - '*.pc'
+    sources:
+      - type: archive
+        url: https://download.gnome.org/sources/dconf/51/dconf-51.0.tar.xz
+        sha256: e65c1b7867f836faad9f9ee04acf5c5a6cae2bbc784833fe093207e0cb590248
+        x-checker-data:
+          type: gnome
+          name: dconf
+          stable-only: true
+      # From: https://src.fedoraproject.org/rpms/dconf
+      - type: patch
+        path: dconf-override.patch
+
+  - name: zypak
+    sources:
+      - type: git
+        url: https://github.com/refi64/zypak
+        tag: v2025.09
+        commit: 693a71c5ffa80ec9c9ce2ae03b1ccc493c698e53
+        x-checker-data:
+          type: git
+          tag-pattern: ^v([\d.]+)$
+
+  - name: helium
+    buildsystem: simple
+    build-commands:
+      - mkdir /app/helium
+      - tar -xvf helium.tar.xz -C /app/helium --strip-components=1 --no-same-owner
+      - install -Dm 755 helium.sh /app/bin/helium
+      - install -Dm 644 -t /app/etc cobalt.ini
+      - install -Dm 644 -t /app/share/applications net.imput.helium.desktop
+      - install -Dm 644 -t /app/share/metainfo net.imput.helium.metainfo.xml
+      - install -Dm 644 -t /app/share/icons/hicolor/scalable/apps/ net.imput.helium.svg
+    sources:
+      - type: file
+        url: https://github.com/imputnet/helium-linux/releases/download/0.21.1.1/helium-0.21.1.1-x86_64_linux.tar.xz
+        sha256: 6cd7f240153cb9c0cdfa27bf1a6651ddcae73a898afc449a93dd10da83b4bd45
+        dest-filename: helium.tar.xz
+        only-arches: [x86_64]
+        x-checker-data:
+          type: json
+          url: https://api.github.com/repos/imputnet/helium-linux/releases/latest
+          url-query: .assets[] | select(.name=="helium-" + $version + "-x86_64_linux"
+            + ".tar.xz") | .browser_download_url
+          version-query: .tag_name
+          is-main-source: true
+      - type: file
+        url: https://github.com/imputnet/helium-linux/releases/download/0.21.1.1/helium-0.21.1.1-arm64_linux.tar.xz
+        sha256: 672a3e9d581edfa414492ea12652aabdf02e700b8e89e2b5599419c70d01dc44
+        dest-filename: helium.tar.xz
+        only-arches: [aarch64]
+        x-checker-data:
+          type: json
+          url: https://api.github.com/repos/imputnet/helium-linux/releases/latest
+          url-query: .assets[] | select(.name=="helium-" + $version + "-arm64_linux"
+            + ".tar.xz") | .browser_download_url
+          version-query: .tag_name
+      - type: script
+        dest-filename: helium.sh
+        commands:
+          - exec cobalt "$@"
+      - type: file
+        path: cobalt.ini
+      - type: file
+        path: net.imput.helium.desktop
+      - type: file
+        path: net.imput.helium.metainfo.xml
+      - type: file
+        path: net.imput.helium.svg
